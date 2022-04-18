@@ -1,0 +1,352 @@
+/*
+** DKU Algorithm Report 2 - Sorting Algorithms
+** Program to sort elements of array using Exchangesort, Mergesort, Quicksort, Heapsort and Radixsort
+** Made by - Helios5778k
+*/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <stdbool.h>
+
+#define swap(type, x, y) do { type t = x; x = y; y = t; } while(0)
+#define MAX_SIZE 10000
+int original[MAX_SIZE];
+int S[MAX_SIZE];
+int n;
+clock_t start, finish, used_time = 0;
+int sum = 0;
+int avg = 0;
+
+// Exchangesort
+void exchangesort (int S[], int n)
+{
+    int i, j;
+    for (i=1; i<=n; i++)
+        for (j=i+1; j<=n; j++)
+            if (S[j] < S[i])
+                swap(int, S[i], S[j]);
+}
+
+// Mergesort
+void merge(int h, int m, int U[], int V[], int S[])
+{
+	int i, j, k;
+
+	i = 0; j = 0; k = 0;
+	while ( i < h && j < m) {
+		if (U[i] < V[j]) {
+			S[k] = U[i];
+			i++;
+		}
+		else {
+			S[k] = V[j];
+			j++;
+		}
+		k++;
+	}
+	if (i >= h) {
+		for( ; k<h+m; k++) {
+			S[k] = V[j];
+			j++;
+		}
+	}
+	else {
+		for( ; k<h+m; k++) {
+			S[k] = U[i];
+			i++;
+		}
+	}
+}
+
+void _mergesort(int n, int S[])
+{
+	int i;
+
+	if (n > 1)
+    {
+		int h = n / 2;
+		int m = n - h;
+		int U[h];
+        int V[m];
+	
+		for(i = 0; i < h; i++) {
+			U[i] = S[i];
+		}
+		for(i = 0; i < m; i++) {
+			V[i] = S[h + i];
+		}
+		
+		_mergesort(h, U);
+		_mergesort(m, V);
+		merge(h, m, U, V, S);
+	}
+}
+
+// Quicksort
+int partition (int S[], int low, int high, int *pivotpoint)
+{
+    int i, j;
+    int pivotitem;
+    
+    pivotitem = S[low];
+    j = low;
+    for (i=low+1; i<=high; i++)
+        if (S[i] < pivotitem) {
+            j++;
+            swap(int, S[i], S[j]);
+        }
+    *pivotpoint = j;
+    swap(int, S[low], S[*pivotpoint]);
+
+    return high;
+}
+
+void quicksort (int S[], int low, int high)
+{
+    int pivotpoint;
+
+    if (high > low)
+    {
+        partition(S, low, high, &pivotpoint);
+        quicksort(S, low, pivotpoint - 1);
+        quicksort(S, pivotpoint + 1, high);
+    }
+}
+
+// Heapsort
+typedef struct Heap
+{
+	int *S;    
+	int heapsize;
+} Heap;
+
+void siftdown(Heap H, int i)
+{
+	int parent, largerchild;  
+	int siftkey;
+	bool spotfound;
+
+	siftkey = H.S[i];
+	parent = i;
+	spotfound = false;
+
+	while (2 * parent <= H.heapsize && !spotfound)
+	{
+		if (2 * parent < H.heapsize && H.S[2 * parent] < H.S[2 * parent + 1])
+			largerchild = 2 * parent + 1;
+		else
+			largerchild = 2 * parent;
+
+		if (siftkey < H.S[largerchild]){
+			H.S[parent] = H.S[largerchild];
+			parent = largerchild;
+		}
+		else
+			spotfound = true;
+	}
+	H.S[parent] = siftkey;
+}
+
+int root(Heap H)
+{
+	int keyout;	
+    
+	keyout = H.S[1];			 
+	H.S[1] = H.S[H.heapsize];
+	H.heapsize = H.heapsize - 1; 
+	siftdown(H, 1);			      
+	return keyout;
+
+}
+
+void removekeys(int n, Heap H, int S[])
+{
+	int i;
+	for (i = n; i >= 1; i--) {
+        S[i] = root(H);						
+	}
+}
+
+void makeheap(int n, Heap H)
+{
+    int i;
+	H.heapsize = n;
+
+	for (i = n/2; i >= 1; i--) {
+		siftdown(H, i);
+	}
+}
+
+void _heapsort(int n, Heap H)
+{
+	makeheap(n, H);
+	removekeys(n, H, H.S);
+}
+
+// Radixsort
+void countsort(int S[], int n, int exp)
+{ 
+  int buffer[n];
+  int i, count[10] = {0};
+  
+  for(i=0; i<n; i++)
+  {
+    count[(S[i]/exp) % 10]++;
+  }
+  
+  for(i=1; i<10; i++)
+  {
+    count[i] = count[i-1];
+  }
+  
+  for(i=n-1; i>=0; i--)
+  {
+    buffer[count[(S[i]/exp) % 10] - 1] = S[i];
+    count[(S[i]/exp) % 10]--;
+  }
+  
+  for(i=0; i<n; i++)
+  {
+    S[i] = buffer[i];
+  }
+}
+
+int getmax(int S[], int n)
+{
+    int digit = 0;
+    int max = S;
+    for (int i=1; i<n; i++) {
+        if (max < S[i])
+            max = S[i];
+    }
+    for(int i=10; max>0; digit++) {
+    max = max/i;
+    }
+    return digit;
+
+}
+
+void _radixsort(int S[], int n)
+{
+  int m = getmax(S, n);
+  
+  for(int exp=1; m/exp>0; exp*=10){
+    countsort(S, n, exp);
+  }
+}
+
+// 원본 배열 origianl[]을 S[]에 복사하는 함수
+void CopyArr(void)
+{
+    int i;
+    for(i=0; i<n; i++)
+        S[i] = original[i];
+}
+ 
+// 실행 시간 측정 함수
+void CalcTime(void)
+{
+    used_time = finish - start;
+    printf("%f sec\n",(float)used_time/CLOCKS_PER_SEC);
+}
+
+int main(void)
+{
+    int i;
+
+    printf("Enter the number of elements: ");
+    scanf("%d",&n);
+
+    srand(time(NULL));
+    for(i=0; i<n; i++)
+    {
+        original[i] = rand() % n + 1;
+    }
+
+    // Exchangesort
+    printf("---Exchangesort---\n");
+    for(i=1; i<6; i++)
+    {
+        CopyArr();
+        start = clock();
+        exchangesort(S, n);
+        finish = clock();
+        printf("execution time %d: ", i);
+        CalcTime();
+        sum += used_time;
+    }
+    avg = sum/5;
+    printf("average execution time: %f sec\n", (float)avg/CLOCKS_PER_SEC);
+
+    // Mergesort
+    printf("---Mergesort---\n");
+    for(i=1; i<6; i++)
+    {
+        CopyArr();
+        start = clock();
+        _mergesort(n, S);
+        finish = clock();
+        printf("execution time %d: ", i);
+        CalcTime();
+        sum += used_time;
+    }
+    avg = sum/5;
+    printf("average execution time: %f sec\n", (float)avg/CLOCKS_PER_SEC);
+
+
+    // Quicksort
+    printf("---Quicksort---\n");
+    sum = 0;
+    avg = 0;
+    for(i=1; i<6; i++)
+    {
+        CopyArr();
+        start = clock();
+        quicksort(S, 0, n);
+        finish = clock();
+        printf("execution time %d: ", i);
+        CalcTime();
+        sum += used_time;        
+    }    
+    avg = sum/5;
+    printf("average execution time: %f sec\n", (float)avg/CLOCKS_PER_SEC);
+
+    // Heapsort
+    printf("---Heapsort---\n");
+    sum = 0;
+    avg = 0;
+    Heap H;
+    H.S = S;
+    for(i=1; i<6; i++)
+    {
+        CopyArr();
+        start = clock();
+        _heapsort(n, H);
+        finish = clock();
+        printf("execution time %d: ", i);
+        CalcTime();
+        sum += used_time;        
+    }    
+    avg = sum/5;
+    printf("average execution time: %f sec\n", (float)avg/CLOCKS_PER_SEC);
+
+    // Radixsort
+    printf("---Radixsort---\n");
+    sum = 0;
+    avg = 0;
+    for(i=1; i<6; i++)
+    {
+        CopyArr();
+        start = clock();
+        _radixsort(S, n);
+        finish = clock();
+        printf("execution time %d: ", i);
+        CalcTime();
+        sum += used_time;        
+    }    
+    avg = sum/5;
+    printf("average execution time: %f sec\n", (float)avg/CLOCKS_PER_SEC);
+
+    return 0;
+}
