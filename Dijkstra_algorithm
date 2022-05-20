@@ -1,0 +1,84 @@
+#include <stdio.h>
+
+#define INF 999 // 무한대
+#define N 5 // 노드의 개수
+
+int A[N][N] = { // 인접행렬 A
+    {0,   1,   INF,  1,   5},
+    {9,   0,   3,    2,   INF},
+    {INF, INF, 0,    4,   INF},
+    {INF, INF, 2,    0,   3},
+    {3,   INF, INF,  INF, 0}
+};
+
+int B[N][N] = { // 인접행렬 B
+    {0, 1, 12, INF, INF},
+    {INF, 0, 9, 3, INF},
+    {INF, INF, 0, INF, 5},
+    {INF, INF, 4, 0, 13},
+    {INF, INF, INF, INF, 0}
+};
+
+int C[N][N] = { // 인접행렬 C
+    {0, 7, 4, 6, 1},
+    {INF, 0, INF, INF, INF},
+    {INF, 2, 0, 5, INF},
+    {INF, 3, INF, 0, INF},
+    {INF, INF, INF, 1, 0}
+};
+
+void dijkstra(int n, int W[N][N]) {
+
+    int i, j, vnear, min;
+    int touch[n+1]; // Y에 있는 정점에서 v1에서 vi로 가는 현재 최단경로 상 마지막 간선이 (v,vi)일 때, Y에 있는 정점 v의 색인, Y에 속한 정점 v의 인덱스
+    int length[n+1]; // Y에 있는 정점에서 v1에서 vi로 가는 현재 최단경로 길이, v1(시작정점)에서 Y에 속한 정점들을 중간정점으로이용해서 vi까지 갈 수 있는 경로의 값
+    int distance[n+1]; // 거리 출력을 위한 위 length의 또 다른 배열
+
+    for (i=2; i<=n; i++) { // 초기화
+        touch[i] = 1; // 아직 Y에 v1밖에 없는 상태
+        length[i] = W[0][i-1]; // (v1,vi)의 가중치
+        distance[i] = W[0][i-1];
+    }
+
+    for (j=1; j<=n-1; j++) { // n-1개의 정점을 Y에 추가
+
+        min = INF;
+        for (i=2; i<=n; i++) { // V-Y 에서 가중치가 가장 작은, 즉 최소 거리의 인접 정점을 찾음
+            if (0<=length[i] && length[i]<min) { 
+                min = length[i];
+                vnear = i;
+            }
+        }
+
+        for (i=2; i<=n; i++) {
+            if (length[vnear] + W[vnear-1][i-1] < length[i]) { // vnear을 경유하여 가는 경우가 더 최단이라면
+                length[i] = length[vnear] + W[vnear-1][i-1]; // 그 최단거리로 업데이트
+                distance[i] = length[i];
+                touch[i] = vnear; // 경유하는 정점 업데이트
+            }
+        }
+
+        length[vnear] = -1; // 방문한 정점은 -1로 업데이트
+    }
+
+    printf("------Dijkstra's shortest path algorithm------ \n");
+    for(i=2; i<=n; i++) {
+        printf("v1 -> v%d의 거리: ", i);
+        printf(" %d\n", distance[i]);
+    }
+    printf("\n");
+}
+
+int main() {
+
+    printf("\n------인접행렬 A------\n");
+    dijkstra(N, A);
+
+    printf("\n------인접행렬 B------\n");
+    dijkstra(N, B);  
+
+    printf("\n------인접행렬 C------\n");
+    dijkstra(N, C); 
+
+    return 0;
+}
