@@ -1,0 +1,137 @@
+/*
+** DKU Algorithm Report 3 - B-Tree Algorithm
+** Minimum degree t = 5, 7, 9 값에 대해 0-9999 사이의 데이터 1000개를 삽입하고 500개를 삭제하는 예제를 실행하여 실행 시간을 분석할 것.
+** Made by - Helios5778k
+*/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+int degree = 5; // 노드 속 최소 키 개수를 결정
+int degnum = 2*degree-1;
+
+typedef struct node { // 트리의 노드 구조체
+	int keys[degnum];
+	int leaf;
+	int size;
+	struct node* child[2*degree];
+} node;
+
+typedef struct Btree { // B-tree 형태의 트리 구조체
+	node* root;
+} Btree;
+
+void ceate(Btree* T) { // 새로운 B-tree를 초기화하는 함수
+
+	node* a = malloc(sizeof(node));
+	a->leaf = TRUE;
+	a->size = 0;
+	T->root = a;
+}
+
+void inserts(Btree* T) { // 0-9999 사이의 데이터 1000개를 삽입하는 함수
+
+    srand((unsigned)time(NULL));
+    int random = 0;
+
+	for (int i=0; i<1000; i++) {
+        random = rand()%10000;
+		insert(T, random);
+	}
+}
+
+void insert(Btree* T, int x) { // 노드의 상태에 따른 삽입 함수
+
+	node* r = T->root;
+
+	if (r->size == degnum) { // 노드가 꽉 차있는 상태면 노드를 쪼갠 후 삽입해준다.
+
+		node* s = malloc(sizeof(node));
+		T->root = s;
+		s->leaf = FALSE;
+		s->size = 0;
+		s->child[0] = r;
+
+		split(s, 0);
+		insert_Nonfull(s, x);
+	}
+	else { // 노드가 가득 차있지 않은 상태면 그냥 삽입해준다.
+		insert_Nonfull(r, x);
+	}
+}
+
+void insert_Nonfull(node* x, int k) { // 노드에 실질적으로 데이터를 삽입해주는 함수
+
+	int i = x->size;
+
+	if (x->leaf) {
+
+		i--;
+		while (i>=0 && k<x->keys[i])
+		{
+			x->keys[i+1] = x->keys[i];
+			i--;
+		}
+		x->keys[i+1] = k;
+		x->size = x->size+1;
+	}
+	else {
+		while (i>=1 && k<x->keys[i-1]) {
+			i--;
+		}
+		if ((x->child[i])->size == degnum) {
+
+			split(x, i);
+
+			if (k > x->keys[i]) {
+				i++;
+			}
+		}
+		insert_Nonfull(x->child[i], k);
+	}
+}
+
+void split(node* x, int i) { // 꽉 차있는 노드를 쪼개주는 함수
+
+	node* z = malloc(sizeof(node));
+	node* y = x->child[i];
+	z->leaf = y->leaf;
+	z->size = degree-1;
+
+	for (int j=0; j<degree-1; j++) {
+		z->keys[j] = y->keys[j+degree];
+	}
+
+	if (y->leaf == FALSE) {
+		for (int j=0; j<degree; j++)
+		{
+			z->child[j] = y->child[j+degree];
+		}
+	}
+	y->size = degree-1;
+
+	for (int j=x->n; j>i; j--) {
+		x->child[j+1] = x->child[j];
+	}
+	x->child[i+1] = z;
+
+	for (int j=x->size-1; j>i-1; j--) {
+		x->keys[j+1] = x->keys[j];
+	}
+	x->keys[i] = y->keys[degree-1];
+	x->size = x->size + 1;
+}
+
+void main() {
+
+	Btree* T = malloc(sizeof(Btree)); // 새로운 Btree T를 할당 받음
+
+	create(T); // 트리 초기화
+    inserts(T); // 트리에 데이터 삽입
+    // delete(T); // 트리의 데이터 삭제 **구현실패
+    // display(T); // 실행 시간 출력 **위의 삭제 함수 구현 실패로 인해 생략
+    free(T); // 트리 할당 해제
+
+    return 0;
+}
